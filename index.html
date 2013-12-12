@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Contour finder</title>
+  <link rel="stylesheet" href="css/normalize.css">
+  <style>
+  	canvas { width: 100px; height: 60px; }
+  </style>
+  <script src="js/jquery-1.10.1.min.js" type="text/javascript"></script>
+  <script src="js/ContourFinder.js" type="text/javascript"></script>
+  <script>
+	  var image;
+		var imageCtx;
+		var foregroudColor = 255;
+		var backgroundColor = 0;
+		var threshold = 125; 
+		var contourFinder = new ContourFinder();
+		
+		$( document ).ready(function() {
+		  console.log( "ready!" );
+		  image = document.getElementById('image');
+			imageCtx = image.getContext('2d');
+			
+			fillImage();
+			contourFinder.findContours(image,foregroudColor,backgroundColor,threshold);
+			
+			$(document).click(onClick);
+			$(document).bind("touchstart",onClick);
+		});
+		function onClick() {
+			startTime = Date.now();
+			
+			contourFinder.findContours(image,foregroudColor,backgroundColor,threshold);
+			
+			alert(Date.now()-startTime);
+		}
+		function fillImage() {
+			imageCtx.clearRect (0,0,image.width,image.height);
+		
+			imageCtx.fillStyle = "#000000";
+			imageCtx.fillRect(0, 0, image.width, image.height);
+			imageCtx.fillStyle = "#ffffff";
+			imageCtx.fillRect(0, 0, 4, 2);
+		}
+		
+  </script>
+</head>
+<body>
+	<canvas id="image" width="5" height="3"></canvas>
+</body>
+</html>

@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Contour finder</title>
+  <link rel="stylesheet" href="css/normalize.css">
+  <script src="js/jquery-1.10.1.min.js" type="text/javascript"></script>
+  <script>
+  
+		var image;
+		var imageCtx;
+		var image2;
+		var image2Ctx;
+		var logo
+		var threshold = 240;
+		var startTime = 0;
+		
+		$( document ).ready(function() {
+		  console.log( "ready!" );
+		  image = document.getElementById('image');
+			imageCtx = image.getContext('2d');
+			image2 = document.getElementById('image2');
+			image2Ctx = image.getContext('2d');
+			
+			fillImage();
+			
+			$(document).click(onClick);
+			$(document).bind("touchstart",onClick);
+		});
+		
+		function fillImage() {
+			logo = new Image();
+	    logo.onload = draw;
+	    //logo.src = "images/logo.png";
+	    //logo.src = "images/arcade.jpg";
+	    logo.src = "images/circus.jpg";
+		}
+		function draw() {
+			imageCtx.drawImage(logo, 0, 0); 
+		}
+		
+		function onClick(e) {
+		
+			threshold = e.pageX/$(window).width()*255;
+			console.log(threshold);
+			//startTime = Date.now();
+			
+			var w = image.width;
+			var h = image.height;
+			var imageData = imageCtx.getImageData(0,0,w, h);
+			var pixels = imageData.data;
+			var prevValue = 0;
+			
+			
+			for (var y = 0; y < h; y++) {
+				for (var x = 0; x < w; x++) {
+					var index = y*w*4+x*4; //(y*w + x)*4;
+					
+					r = pixels[index+0];
+					g = pixels[index+1];
+					b = pixels[index+2];
+					a = pixels[index+3];
+					//console.log(index+": "+r+" "+" "+g+" "+b+" "+a); //+" > "+factor+" > "+value);
+					//console.log();
+					var factor = ((pixels[index] *.3 + pixels[index+1]*.59 + pixels[index+2]*.11) )
+
+					
+					//var value = g; 
+					var value = (factor > threshold)? 255 : 0; // threshold
+
+					//console.log("   > "+factor+" > "+value);
+					
+					//console.log(" > "+value);
+					
+					pixels[index+0] = value;
+					pixels[index+1] = value;
+					pixels[index+2] = value;
+					//pixels[index+3] = value;
+				}
+			}
+			
+			//console.log("pixels: ",pixels);
+			
+			// copy the image data back onto the canvas
+			image2Ctx.putImageData(imageData, 0, 0); // at coords 0,0
+			
+			
+			//alert(Date.now()-startTime);
+		}
+  	
+  </script>
+</head>
+<body>
+	<canvas id="image" width="500" height="500"></canvas>
+	<canvas id="image2" width="500" height="500"></canvas>
+</body>
+</html>

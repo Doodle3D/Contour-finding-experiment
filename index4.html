@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Contour finder</title>
+  <link rel="stylesheet" href="css/normalize.css">
+  <script src="js/jquery-1.10.1.min.js" type="text/javascript"></script>
+  <script src="js/ContourFinder.js" type="text/javascript"></script>
+  <script>
+  
+		var image;
+		var imageCtx;
+		var contour;
+		var contourCtx;
+		var foregroudColor = 255;
+		var backgroundColor = 0;
+		var threshold = 125; 
+		var contourFinder = new ContourFinder();
+		var startTime = 0;
+		$( document ).ready(function() {
+		  console.log( "ready!" );
+		  image = document.getElementById('image');
+			imageCtx = image.getContext('2d');
+			contour = document.getElementById('contour');
+			contourCtx = contour.getContext('2d');
+			
+			fillImage();
+			
+			$(document).click(onClick);
+			$(document).bind("touchstart",onClick);
+		});
+		function onClick() {
+			startTime = Date.now();
+			// ToDo: try edge detection filter
+			// ToDo: preprocess: threshold
+			contourFinder.findContours(image,foregroudColor,backgroundColor,threshold);
+			
+			alert(Date.now()-startTime);
+		}
+		function fillImage() {
+			imageCtx.clearRect (0,0,image.width,image.height);
+		
+			imageCtx.fillStyle = "#000000";
+			imageCtx.fillRect(0, 0, image.width, image.height);
+			imageCtx.fillStyle = "#009900"
+			
+			var numWhiteRects = 20;
+			var maxWhiteWidth = 100;
+			var maxWhiteHeight = 100;
+			var numBlackRects = 20;
+			var maxBlackWidth = 50;
+			var maxBlackHeight = 50;
+					
+			for(var i = 0;i<numWhiteRects;i++){
+				var w = Math.random()*maxWhiteWidth;
+				var h = Math.random()*maxWhiteHeight;
+				var x = Math.random()*(image.width-w)
+				var y = Math.random()*(image.height-h)
+				imageCtx.fillRect(x, y, w, h);
+			}
+			imageCtx.fillStyle = "#000000";
+			for(var i = 0;i<numBlackRects;i++){
+				var w = Math.random()*maxBlackWidth;
+				var h = Math.random()*maxBlackHeight;
+				var x = Math.random()*(image.width-w)
+				var y = Math.random()*(image.height-h)
+				imageCtx.fillRect(x, y, w, h);
+			}
+		}
+		
+		function drawContours() {
+			
+		}
+  	
+  </script>
+</head>
+<body>
+	<canvas id="image" width="1024" height="768"></canvas>
+	<canvas id="contour" width="1024" height="768"></canvas>
+</body>
+</html>
