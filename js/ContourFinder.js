@@ -1,3 +1,8 @@
+/*
+ * sources (re-implement basic finder and then add iterative functionality?):
+ * - https://github.com/Dkendal/Moore-Neighbor_Contour_Tracer/blob/master/ContourTrace.cs
+ * - http://www.imageprocessingplace.com/downloads_V3/root_downloads/tutorials/contour_tracing_Abeer_George_Ghuneim/moore.html
+ */
 function ContourFinder() {
 
 	this.pixelsWidth; 	// pixels width
@@ -10,7 +15,29 @@ function ContourFinder() {
 	this.maxContourPoints = 500*10;
 	this.allContours = [];
 
+	this.offset4 = function(x, y) { return (y * this.pixelsWidth + x) * 4; }
 	this.offset = function(x, y) { return (y * this.pixelsWidth + x) * 4; }
+	
+	this.getPixel = function(x, y) { return {
+		r: this.pixels[this.offset4(x, y)],
+		g: this.pixels[this.offset4(x, y) + 1],
+		b: this.pixels[this.offset4(x, y) + 2],
+		a: this.pixels[this.offset4(x, y) + 3]
+	};}
+	
+//	this.setPixel = function(x, y, pixel) {
+//		this.pixels[this.offset4(x, y)] = pixel.r;
+//		this.pixels[this.offset4(x, y) + 1] = pixel.g;
+//		this.pixels[this.offset4(x, y) + 2] = pixel.b;
+//		this.pixels[this.offset4(x, y) + 3] = pixel.a;
+//	}
+	this.setPixel = function(x, y, pixel) {
+		this.pixels[this.offset4(x, y)] = pixel[0];
+		this.pixels[this.offset4(x, y) + 1] = pixel[1];
+		this.pixels[this.offset4(x, y) + 2] = pixel[2];
+		this.pixels[this.offset4(x, y) + 3] = pixel[3];
+	}
+
 	
 	this.findContours = function(image,foregroundColor,backgroundColor,threshold) {
 		var w = this.pixelsWidth = image.width;
@@ -29,67 +56,45 @@ function ContourFinder() {
 
 		for (var y = 0; y < h; y++) {
 			for (var x = 0; x < w; x++) {
-				var index = this.offset(x, y);
-
-				/*r = pixels[index+0];
-				g = pixels[index+1];
-				b = pixels[index+2];
-				a = pixels[index+3];*/
-				var factor = ((pixels[index] *.3 + pixels[index+1]*.59 + pixels[index+2]*.11) )
+				var pix = this.getPixel(x, y);
+				var factor = ((pix.r * .3 + pix.g * .59 + pix.b * .11) )
 				//console.log(index+": "+r+" "+" "+g+" "+b+" "+a);
 
 				//var value = g; 
-				var value = (factor > threshold)? 255 : 0; // threshold
+				var value = (factor > threshold) ? 255 : 0; // threshold
 
 				//console.log(" > "+value);
 
-				pixels[index+0] = value;
-				pixels[index+1] = value;
-				pixels[index+2] = value;
-				//pixels[index+3] = value;
+				//this.setPixel(x, y, { r: value, g: value, b: value, a: pix.a });
+				this.setPixel(x, y, [value, value, value, pix.a]);
+//				pixels[index].r = value;
+//				pixels[index].g = value;
+//				pixels[index].b = value;
+//				//pixels[index].a = value;
 			}
 		}
-
-		//console.log("pixels: ",pixels);
 
 		// copy the image data back onto the canvas
 		//imageCtx.putImageData(imageData, 0, 0); // at coords 0,0
 		//return; 
 
-		var counter = 0;
-
 		for (var y = 0; y < h; y++) {
 			for (var x = 0; x < w; x++) {
-				var index = y*w*4+x*4; 
+				var pix = this.getPixel(x, y);
 
-				r = pixels[index+0];
-				g = pixels[index+1];
-				b = pixels[index+2];
-				a = pixels[index+3];
-
-				var value = g; 
-				value = (value > threshold)? 255 : 0;
+				var value = pix.g;
+				value = (value > threshold) ? 255 : 0;
 				// if we enter a foreGround color and red isn't 0 (already stored as contour)
-				if(prevValue == backgroundColor && value == foregroundColor && r != 0) {
-					var points = this.followContour([x,y]);
+				if(prevValue == backgroundColor && value == foregroundColor && pix.r != 0) {
+					var points = this.followContour({ x: x, y: y });
 					this.allContours.push(points);
-					counter++;
 				}
 
-				//r = 255;
-				pixels[index+0] = r;
-				pixels[index+1] = g;
-				pixels[index+2] = b;
-				pixels[index+3] = a;
+				//pix.r = 255;
+				this.setPixel(x, y, [pix.r, pix.g, pix.b, pix.a]);
 				prevValue = value;
 			}
 		}
-
-		// console.log("counter: " +counter);
-
-		//  console.log(this.getPoints(points));
-		// console.log("======================================");
-
 
 		/*for (var i = 0, n = pixels.length; i < n; i += 4) {
 			var grayscale = pixels[i  ] * .3 + pixels[i+1] * .59 + pixels[i+2] * .11;
@@ -131,7 +136,7 @@ function ContourFinder() {
 	}
 	
 	this.followContour = function(startPoint) {
-		//console.log("followContour @",startPoint);
+//		console.log("followContour @",startPoint);
 		points = []; // start new contour
 		points.push(startPoint);
 		var w = this.pixelsWidth;
@@ -142,8 +147,7 @@ function ContourFinder() {
 		var point = startPoint;
 		var numPoints = 0;
 
-		// define neighborhood (array of 4, with:
-		//   x offset, y offset, index offset, next neighbourhood element to check
+		// define neighborhood (with: x offset, y offset, index offset, next neighborhood element to check)
 //		var neighborhood = [
 //			[ 1,  0,  1,   7], // east
 //			[ 1,  1,  w+1, 0], // south-east
@@ -154,15 +158,16 @@ function ContourFinder() {
 //			[ 0, -1, -w,   5], // north
 //			[ 1, -1, -w+1, 6]  // north-east
 //		];
+
 //		var neighborhood = [
-//			[-1, -1, -w-1, 7], // north-west
-//			[ 0, -1, -w,   0], // north
-//			[ 1, -1, -w+1, 1], // north-east
-//			[ 1,  0,  1,   2], // east
-//			[ 1,  1,  w+1, 3], // south-east
-//			[ 0,  1,  w,   4], // south
-//			[-1,  1,  w-1, 5], // south-west
-//			[-1,  0, -1,   6]  // west
+//            { xd: -1, yd:  0, offs: -1,   next: 7 }, // west
+//            { xd: -1, yd: -1, offs: -w-1, next: 0 }, // north-west
+//            { xd:  0, yd: -1, offs: -w,   next: 1 }, // north
+//            { xd:  1, yd: -1, offs: -w+1, next: 2 }, // north-east
+//            { xd:  1, yd:  0, offs:  1,   next: 3 }, // east
+//            { xd:  1, yd:  1, offs:  w+1, next: 4 }, // south-east
+//            { xd:  0, yd:  1, offs:  w,   next: 5 }, // south
+//            { xd: -1, yd:  1, offs:  w-1, next: 6 }  // south-west
 //		];
 
 //		var neighborhood = [
@@ -176,45 +181,42 @@ function ContourFinder() {
 //	        [ 1,  1,  w+1, 5]
 //        ];
 		var neighborhood = [
-			[ 1,  0,  1,   3], // east
-			[ 0,  1,  w,   0], // south
-			[-1,  0, -1,   1], // west
-			[ 0, -1, -w,   2]  // north
+			{ xd:  1, yd:  0, offs:  1, next: 3 }, // east
+			{ xd:  0, yd:  1, offs:  w, next: 0 }, // south
+			{ xd: -1, yd:  0, offs: -1, next: 1 }, // west
+			{ xd:  0, yd: -1, offs: -w, next: 2 }  // north
 		];
 
 		var prevIndex;
 		var nextNeighbor = 0; // starting point for neighborhood search (index for neighborhood array)
 		do {
-			//console.log("  point: ",point[0],point[1]);
-			var x = point[0];
-			var y = point[1];
+			//console.log("  point: ",point.x,point.y);
 
-
-			// go clockwise trough neighbors (starting at east side)  
-			var index = y*w*4+x*4;
+			// go clockwise trough neighbors  
+			var index = this.offset4(point.x, point.y);
 			this.pixels[index] = 0; // r
 			this.pixels[index+2] = 0; // b
-			var newPoint;
+			var newPoint = {};
 			//console.log("  index: ",index);
 			var i = nextNeighbor;
 			//console.log("    nextNeighbor: ",nextNeighbor);
-			for(var j=0;j<neighborhood.length;j++) {
+			for(var j = 0; j < neighborhood.length; j++) {
 
 				//console.log("    neighbor: ",i);
-				var nIndex = index+neighborhood[i][2]*4;
+				var nIndex = index + neighborhood[i].offs * 4;
 				//console.log("      neighbor index: ",nIndex);
 				//console.log("      neighbor g index: ",nIndex+1);
 				//console.log("      value: ",this.pixels[nIndex+1]);
 				// todo: check if in range
 				if(this.pixels[nIndex+1] == this.fColor && nIndex != prevIndex) { 
 					//console.log("      == fColor");
-					newPoint = [x+neighborhood[i][0],y+neighborhood[i][1]];
-					nextNeighbor = neighborhood[i][3];
+					newPoint = { x: point.x + neighborhood[i].xd, y: point.y + neighborhood[i].yd };
+					nextNeighbor = neighborhood[i].next;
 					break;
 				}
 
 				i++;
-				i = i%neighborhood.length;
+				i = i % neighborhood.length;
 
 			}
 			if(newPoint == undefined) {
@@ -233,20 +235,22 @@ function ContourFinder() {
 			numPoints++;
 			//console.log(point[0],startPoint[0],"  ",point[1],startPoint[1]);
 
-		} while(!(point[0] == startPoint[0] && point[1] == startPoint[1]) && numPoints < this.maxContourPoints);
+		} while(!(point.x == startPoint.x && point.y == startPoint.y) && numPoints < this.maxContourPoints);
 
 		this.closeContour(points);
 
 		return points;
 	}
+	
 	this.closeContour = function(points) {
 		//console.log("pixels: ",this.pixels);
 	}
+	
 	this.getPoints = function(points) {
 		var log = "";
 		for(var i=0;i<points.length;i++) {
 			var point = points[i];
-			log += point[0]+","+point[1]+" > ";
+			log += point.x+","+point.y+" > ";
 		}
 		return log;
 	}

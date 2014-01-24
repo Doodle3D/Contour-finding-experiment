@@ -42,6 +42,7 @@
       imageCtx.clearRect(0,0,1000,1000);
 
       for (var i=0; i<contourFinder.allContours.length; i++) {
+    	  console.log("contour #" + i + " length: " + contourFinder.allContours[i].length);
         imageCtx.strokeStyle = '#'+Math.floor(Math.random()*16777215).toString(16);
         drawContour(i);
       }
@@ -69,13 +70,13 @@
       var points = contourFinder.allContours[index];
       if (points.length<=0) return;
 
-      imageCtx.beginPath();
-      imageCtx.moveTo(points[0][0],points[0][1]); 
+       imageCtx.beginPath();
+      imageCtx.moveTo(points[0].x,points[0].y); 
       for (var i=0; i<points.length; i++) {
-        imageCtx.lineTo(points[i][0],points[i][1]);
+        imageCtx.lineTo(points[i].x,points[i].y);
       }
       imageCtx.stroke();
-    }
+     }
     
   	
   </script>
