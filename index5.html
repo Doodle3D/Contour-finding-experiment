@@ -18,6 +18,8 @@
 		//var threshold = 120; //circus
 		var contourFinder = new ContourFinder();
 		var startTime = 0;
+    var currentContour = 0;
+
 		$( document ).ready(function() {
 		  console.log( "ready!" );
 		  image = document.getElementById('image');
@@ -34,7 +36,17 @@
 			// ToDo: preprocess: threshold
 			contourFinder.findContours(image,foregroudColor,backgroundColor,threshold);
 			
-			alert(Date.now()-startTime);
+      console.log("contourFinder.allpoints.length): " + contourFinder.allpoints.length);
+			//alert(Date.now()-startTime);
+
+      imageCtx.clearRect(0,0,1000,1000);
+
+      for (var i=0; i<contourFinder.allpoints.length; i++) {
+        imageCtx.strokeStyle = '#'+Math.floor(Math.random()*16777215).toString(16);
+        drawContour(i);
+      }
+
+      // console.log(contourFinder.getPoints());
 		}
 		function fillImage() {
 			//imageCtx.clearRect (0,0,image.width,image.height);
@@ -42,7 +54,7 @@
 			logo = new Image();
 	    logo.onload = draw;
 	    //logo.src = "images/logo.png";
-	    logo.src = "images/arcade.jpg";
+	    logo.src = "images/hart.png";
 			//logo.src = "images/circus.jpg";
 		}
 		function draw() {
@@ -52,6 +64,19 @@
 		function drawContours() {
 			
 		}
+
+    function drawContour(index) {
+      var points = contourFinder.allpoints[index];
+      if (points.length<=0) return;
+
+      imageCtx.beginPath();
+      imageCtx.moveTo(points[0][0],points[0][1]); 
+      for (var i=0; i<points.length; i++) {
+        imageCtx.lineTo(points[i][0],points[i][1]);
+      }
+      imageCtx.stroke();
+    }
+    
   	
   </script>
 </head>

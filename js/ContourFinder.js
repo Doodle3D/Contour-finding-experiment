@@ -6,7 +6,9 @@ function ContourFinder() {
 	this.fColor; // foreground color
 	this.bColor; // background color
 	this.threshold;
-	this.maxContourPoints = 500*4;
+	this.maxContourPoints = 500*10; //was 500*4
+  this.allpoints = [];
+
 	this.findContours = function(image,foregroundColor,backgroundColor,threshold) {
 		var w = this.pixelsWidth = image.width;
 		var h = this.pixelsHeight = image.height; 
@@ -51,6 +53,8 @@ function ContourFinder() {
 		//imageCtx.putImageData(imageData, 0, 0); // at coords 0,0
 		//return; 
 		
+    var counter = 0;
+
 		for (var y = 0; y < h; y++) {
 			for (var x = 0; x < w; x++) {
 				var index = y*w*4+x*4; 
@@ -64,7 +68,9 @@ function ContourFinder() {
 				value = (value > threshold)? 255 : 0;
 				// if we enter a foreGround color and red isn't 0 (already stored as contour)
 				if(prevValue == backgroundColor && value == foregroundColor && r != 0) {
-					this.followContour([x,y]);
+					var points = this.followContour([x,y]);
+          this.allpoints.push(points);
+          counter++;
 				}
 				
 				//r = 255;
@@ -75,6 +81,12 @@ function ContourFinder() {
 				prevValue = value;
 			}
 		}
+
+    // console.log("counter: " +counter);
+
+    //  console.log(this.getPoints(points));
+    // console.log("======================================");
+
 		
 		/*for (var i = 0, n = pixels.length; i < n; i += 4) {
 			var grayscale = pixels[i  ] * .3 + pixels[i+1] * .59 + pixels[i+2] * .11;
@@ -187,7 +199,10 @@ function ContourFinder() {
 		  //console.log(point[0],startPoint[0],"  ",point[1],startPoint[1]);
 		  
 	  } while(!(point[0] == startPoint[0] && point[1] == startPoint[1]) && numPoints < this.maxContourPoints);
+
 	  this.closeContour(points);
+
+    return points;
 	}
 	this.closeContour = function(points) {
 		//console.log("pixels: ",this.pixels);
