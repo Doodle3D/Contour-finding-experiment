@@ -8,17 +8,18 @@ var threshold = 125;
 var contourFinder = new ContourFinder();
 
 $( document ).ready(function() {
-  console.log( "ready!" );
-  image = document.getElementById('image');
+	console.log( "ready!" );
+	image = document.getElementById('image');
 	imageCtx = image.getContext('2d');
 	contour = document.getElementById('contour');
 	contourCtx = contour.getContext('2d');
-	
+
 	fillImage();
 	// ToDo: try edge detection filter
 	// ToDo: preprocess: threshold
 	contourFinder.findContours(image,foregroudColor,backgroundColor,threshold);
 });
+
 function fillImage() {
 	imageCtx.clearRect (0,0,image.width,image.height);
 
@@ -29,5 +30,4 @@ function fillImage() {
 }
 
 function drawContours() {
-	
 }
